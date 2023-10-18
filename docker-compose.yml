@@ -1,0 +1,71 @@
+version: '3.5'
+services:
+  app1: # API - Instância 01
+    image: didijudo/rinha
+    hostname: app1
+    depends_on:
+      - db
+    expose:
+      - "8080"
+    networks:
+      - rinha-rede
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: '0.5G'
+
+  app2: # API - Instância 01
+    image: didijudo/rinha
+    hostname: app2
+    depends_on:
+      - db
+    expose:
+      - "8080"
+    networks: 
+      - rinha-rede
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: '0.5G'
+
+  nginx: # Load Balancer
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - rinha-rede
+    depends_on:
+      - app1
+      - app2
+    ports:
+      - "9999:9999"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: '1G'
+
+  db:
+    image: postgres:14-alpine3.14
+    hostname: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/
+    environment:
+      - POSTGRES_DB=rinha
+      - POSTGRES_USER=rinha
+      - POSTGRES_PASSWORD=rinha
+    networks:
+      - rinha-rede
+    deploy:
+      resources:
+        limits:
+          cpus: '0.7'
+          memory: '1.5GB'
+
+networks:
+  rinha-rede:
+    driver: bridge
